@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
                     idle = 1;
                     if(nread == 10 && buffer[0] == 'N' && buffer[1] == 'U' && buffer[2] == 'D' && buffer[3] == 'P' && buffer[4] == 'N'){
                         if(buffer[5] == 'S'){
-                            sprintf(setip_cmd, "/sbin/ifconfig tun5 172.10.200.%d/24", buffer[6] + 2);
+                            sprintf(setip_cmd, "/sbin/ifconfig tun5 172.16.200.%d/24", buffer[6] + 2);
                             if(system(setip_cmd)){
                                 panic("Set ip failed\n");
                             }

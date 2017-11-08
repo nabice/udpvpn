@@ -66,7 +66,7 @@ int main(void)
     if((tunfd = tun_alloc("tun5", IFF_TUN | IFF_NO_PI)) < 0){
         panic("Open tun failed\n");
     }
-    if(system("/sbin/ifconfig tun5 172.10.200.1/24")){
+    if(system("/sbin/ifconfig tun5 172.16.200.1/24")){
         panic("Set ip failed\n");
     }
     if ((sockfd=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
