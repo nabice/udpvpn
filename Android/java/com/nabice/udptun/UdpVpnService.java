@@ -59,6 +59,7 @@ public class UdpVpnService extends VpnService {
         setConnectingThread(null);
         setConnection(null);
         stopForeground(true);
+        stopService(new Intent(this, UdpVpnService.class));
     }
 
     private void startConnection(final UdpVpnConnection connection) {

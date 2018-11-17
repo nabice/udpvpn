@@ -55,18 +55,15 @@ class UdpVpnConnection implements Runnable {
             final SocketAddress serverAddress = new InetSocketAddress(mServer, 51122);
             run(serverAddress);
         } catch (IOException | IllegalArgumentException e) {
-            Log.e(getTag(), "Connection failed, exiting", e);
+            panic("Connection failed, exiting");
         }
     }
 
     private void panic(String msg) {
-        Log.e(getTag(), msg);
-        mService.stopService(new Intent(mService, UdpVpnClient.class));
-        timer.interrupt();
-        send.interrupt();
-        recv.interrupt();
-        System.exit(-1);
-
+        if(msg != null) {
+            Log.e(getTag(), msg);
+        }
+        mService.stopService(new Intent(mService, UdpVpnService.class));
     }
     private FileInputStream in;
     private FileOutputStream out;
@@ -91,19 +88,19 @@ class UdpVpnConnection implements Runnable {
                 try {
                     TimeUnit.SECONDS.sleep(10);
                 } catch (InterruptedException e) {
-                    panic("Interrupted");
+                    return;
                 }
                 if(!ip_done){
                     panic("Can not connect to the server");
                 }
                 while (true) {
                     if(Thread.interrupted()) {
-                        break;
+                        return;
                     }
                     try {
                         TimeUnit.MINUTES.sleep(10);
                     } catch (InterruptedException e) {
-                        panic("Interrupted");
+                        return;
                     }
                     if (idle > 4) {
                         panic("Server timeout");
@@ -114,7 +111,7 @@ class UdpVpnConnection implements Runnable {
                     try {
                         tunnel.write(packet_c);
                     } catch (IOException e) {
-                        Log.e(getTag(), "Keepalive failed", e);
+                        panic("Keepalive failed");
                     }
                     packet_c.clear();
                 }
@@ -155,7 +152,7 @@ class UdpVpnConnection implements Runnable {
                                     byte[] from_tun = new byte[MAX_PACKET_SIZE];
                                     while (true) {
                                         if(Thread.interrupted()) {
-                                            break;
+                                            return;
                                         }
                                         try {
                                             int length_in = in.read(from_tun);;
@@ -201,17 +198,19 @@ class UdpVpnConnection implements Runnable {
             recv.start();
             while (true) {
                 if(Thread.interrupted()) {
-                    timer.interrupt();
                     send.interrupt();
+                    timer.interrupt();
                     recv.interrupt();
                     break;
                 }
                 TimeUnit.SECONDS.sleep(10);
             }
         } catch (SocketException e) {
-            Log.e(getTag(), "Cannot use socket", e);
+            panic("Cannot use socket");
         } catch (InterruptedException e) {
-            Log.e(getTag(), "Interrupted", e);
+            send.interrupt();
+            timer.interrupt();
+            recv.interrupt();
         }
 
     }

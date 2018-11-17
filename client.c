@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/epoll.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "tun.h"
 #include "config.h"
 #include "die.h"
@@ -27,7 +28,8 @@ int main(int argc, char *argv[]) {
     struct epoll_event events[3];
     struct itimerspec new_value;
 
-    char buffer[BUFLEN], setip_cmd[40];
+    unsigned char buffer[BUFLEN];
+    char setip_cmd[70];
     char command[10] = "NUDPN";
     const char *srv_ip;
     int sockfd, tunfd, timerfd, i, nfds, epfd, nread;
@@ -35,6 +37,8 @@ int main(int argc, char *argv[]) {
     int idle = 1;
     socklen_t slen = sizeof(si_server);
     uint64_t exp;
+    const char *client_ip_prefix;
+    char *tun_name;
 
     if(argc > 1){
         srv_ip = argv[1];
@@ -42,7 +46,19 @@ int main(int argc, char *argv[]) {
         srv_ip = SRV_IP;
     }
     
-    if((tunfd = tun_alloc("tun5", IFF_TUN | IFF_NO_PI)) < 0){
+    if(argc > 2){
+        client_ip_prefix = argv[2];
+    } else {
+        client_ip_prefix = CLIENT_IP_PREFIX;
+    }
+
+    if(argc > 4){
+        tun_name = argv[4];
+    } else {
+        tun_name = TUN_NAME;
+    }
+
+    if((tunfd = tun_alloc(tun_name, IFF_TUN | IFF_NO_PI)) < 0){
         panic("Open tun failed\n");
     }
 
@@ -60,9 +76,18 @@ int main(int argc, char *argv[]) {
     if((timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) == -1){
         panic("Timer failed\n");
     }
+
+    if(daemon(0, 1) != 0){
+        return -1;
+    }
+
     new_value.it_value.tv_sec = 10;
     new_value.it_value.tv_nsec = 0;
-    new_value.it_interval.tv_sec = 600;
+    if(argc > 5){
+        new_value.it_interval.tv_sec = 60;//add new super client
+    } else {
+        new_value.it_interval.tv_sec = 600;
+    }
     new_value.it_interval.tv_nsec = 0;
     timerfd_settime(timerfd, 0, &new_value, NULL);
 
@@ -70,7 +95,11 @@ int main(int argc, char *argv[]) {
     set_epoll_descriptor(epfd, EPOLL_CTL_ADD, tunfd, EPOLLIN | EPOLLET);
     set_epoll_descriptor(epfd, EPOLL_CTL_ADD, sockfd, EPOLLIN | EPOLLET);
     set_epoll_descriptor(epfd, EPOLL_CTL_ADD, timerfd, EPOLLIN | EPOLLET);
-    command[5] = 'C';//add new client
+    if(argc > 5){
+        command[5] = 'S';//add new super client
+    } else {
+        command[5] = 'C';//add new client
+    }
     sendto(sockfd, command, 10, 0, (struct sockaddr *)&si_server, slen);
     while(1){
         nfds = epoll_wait(epfd, events, 3, -1);
@@ -80,12 +109,12 @@ int main(int argc, char *argv[]) {
                     idle = 1;
                     if(nread == 10 && buffer[0] == 'N' && buffer[1] == 'U' && buffer[2] == 'D' && buffer[3] == 'P' && buffer[4] == 'N'){
                         if(buffer[5] == 'S'){
-                            sprintf(setip_cmd, "/sbin/ifconfig tun5 172.16.200.%d/24", buffer[6] + 2);
+                            sprintf(setip_cmd, "ip addr add %s%d/24 dev %s && ip link set %s up", client_ip_prefix, buffer[6] + 2, tun_name, tun_name);
                             if(system(setip_cmd)){
                                 panic("Set ip failed\n");
                             }
-                            if(argc == 3){
-                                if(system(argv[2])){
+                            if(argc > 3){
+                                if(system(argv[3])){
                                     nopanic("Command after connect exec failed\n");
                                 }
                             }

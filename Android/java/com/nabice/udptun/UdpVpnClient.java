@@ -34,7 +34,18 @@ public class UdpVpnClient extends AppCompatActivity {
             }
         });
         findViewById(R.id.disconnect).setOnClickListener(v -> startService(getServiceIntent().setAction(UdpVpnService.ACTION_DISCONNECT)));
+        findViewById(R.id.myhome).setOnClickListener(v -> {
+            server.setText("server1.com");
+            client.setText("172.25.1.");
+            dns.setText("8.8.8.8");
 
+        });
+        findViewById(R.id.goout).setOnClickListener(v -> {
+            server.setText("server2.com");
+            client.setText("172.25.2.");
+            dns.setText("8.8.8.8");
+
+        });
     }
 
     @Override

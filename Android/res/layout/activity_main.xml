@@ -18,6 +18,7 @@
         android:singleLine="true"
         android:text="100.100.100.100"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/server_title"
         app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
@@ -29,8 +30,9 @@
         android:hint="Client IP"
         android:inputType="textPersonName"
         android:singleLine="true"
-        android:text="172.16.200."
+        android:text="172.25.1."
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/client_title"
         app:layout_constraintTop_toBottomOf="@+id/server" />
 
     <EditText
@@ -44,6 +46,7 @@
         android:singleLine="true"
         android:text="8.8.8.8"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/dns_title"
         app:layout_constraintTop_toBottomOf="@+id/client" />
 
     <Button
@@ -70,19 +73,24 @@
         android:id="@+id/server_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginBottom="4dp"
+        android:layout_marginEnd="6dp"
         android:text="Server"
         android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintBottom_toBottomOf="@+id/server"
+        app:layout_constraintEnd_toStartOf="@+id/server"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/client_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="21dp"
+        android:layout_marginEnd="6dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="20dp"
         android:text="Client"
         android:textSize="18sp"
+        app:layout_constraintEnd_toStartOf="@+id/client"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/server_title" />
 
@@ -90,10 +98,34 @@
         android:id="@+id/dns_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="21dp"
+        android:layout_marginEnd="6dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="20dp"
         android:text="DNS"
         android:textSize="18sp"
+        app:layout_constraintEnd_toStartOf="@+id/dns"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/client_title" />
+
+    <Button
+        android:id="@+id/myhome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="Server1"
+        app:layout_constraintStart_toStartOf="@+id/connect"
+        app:layout_constraintTop_toTopOf="@+id/connect" />
+
+    <Button
+        android:id="@+id/goout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="84dp"
+        android:layout_marginTop="48dp"
+        android:text="Server2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/disconnect"
+        app:layout_constraintTop_toTopOf="@+id/disconnect" />
 
 </android.support.constraint.ConstraintLayout>

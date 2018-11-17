@@ -1,6 +1,6 @@
 #ifndef _crypt_h_
 #define _crypt_h_
-void encrypt(char *, int);
-void decrypt(char *, int);
+void encrypt(unsigned char *, int);
+void decrypt(unsigned char *, int);
 
 #endif
