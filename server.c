@@ -21,7 +21,7 @@
 
 struct client_t {
     char idle;  //idle time, 0 for not used client
-    struct sockaddr_in addr;  //real addr info
+    struct sockaddr_in6 addr;  //real addr info
     int slen;      //sizeof addr
 };
 
@@ -36,11 +36,11 @@ int get_empty_client(struct client_t * clients)
     return -1;
 }
 
-int get_client_by_addr(struct sockaddr_in * si_client, struct client_t * clients)
+int get_client_by_addr(struct sockaddr_in6 * si_client, struct client_t * clients)
 {
     int i;
     for(i = 0;i < CLIENT_SIZE; i++){
-        if(si_client->sin_port == clients[i].addr.sin_port && si_client->sin_addr.s_addr == clients[i].addr.sin_addr.s_addr){
+        if(si_client->sin6_port == clients[i].addr.sin6_port && memcmp(si_client->sin6_addr.s6_addr, clients[i].addr.sin6_addr.s6_addr, 16) == 0){
             return i;
         }
     }
@@ -49,14 +49,14 @@ int get_client_by_addr(struct sockaddr_in * si_client, struct client_t * clients
 
 int main(int argc, char *argv[])
 {
-    struct sockaddr_in si_server;
-    struct sockaddr_in si_client;
+    struct sockaddr_in6 si_server;
+    struct sockaddr_in6 si_client;
     struct epoll_event events[3];
     struct client_t clients[CLIENT_SIZE];
     struct itimerspec new_value;
 
     unsigned char buffer[BUFLEN];
-    char setip_cmd[70], subnet_s[16];
+    char setip_cmd[70], subnet_s[16], ip_str[40];
     char command[10] = "NUDPN";
     int sockfd, tunfd, timerfd, i, j, nfds, epfd, nread, client_id;
     int super_client = -1;
@@ -86,15 +86,15 @@ int main(int argc, char *argv[])
         }
     }
 
-    if ((sockfd=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+    if ((sockfd=socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
         panic("Open socket failed\n");
     }
 
     fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL) | O_NONBLOCK);
     memset((char *) &si_server, 0, sizeof(si_server));
-    si_server.sin_family = AF_INET;
-    si_server.sin_port = htons(PORT);
-    si_server.sin_addr.s_addr = htonl(INADDR_ANY);
+    si_server.sin6_family = AF_INET6;
+    si_server.sin6_port = htons(PORT);
+    si_server.sin6_addr = in6addr_any;
     if (bind(sockfd, (struct sockaddr *)&si_server, sizeof(si_server))==-1) {
         panic("Bind failed\n");
     }
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
                                     command[5] = 'S';//set client ip
                                     command[6] = client_id;
                                     sendto(sockfd, command, 10, 0, (struct sockaddr *)&si_client, slen);
-                                    LOG("New client: %d, %u\n", client_id, si_client.sin_addr.s_addr);
+                                    LOG("New client: %d, %s\n", client_id, inet_ntop(AF_INET6, si_client.sin6_addr.s6_addr, ip_str, 40));
                                 }else{
                                     command[5] = 'F'; //too many clients
                                     sendto(sockfd, command, 10, 0, (struct sockaddr *)&si_client, slen);
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
                             }
                             if(client_id >= 0 && client_id < CLIENT_SIZE){
                                 //client_ip may be changed, or client has multiple wan ip
-                                LOG("Client ip/port changed: %d, %u\n", client_id, si_client.sin_addr.s_addr);
+                                LOG("Client ip/port changed: %d, %s\n", client_id, inet_ntop(AF_INET6, si_client.sin6_addr.s6_addr, ip_str, 40));
                                 clients[client_id].idle = 1;
                                 clients[client_id].addr = si_client;
                                 clients[client_id].slen = slen;
