@@ -63,7 +63,7 @@ class UdpVpnConnection implements Runnable {
         if(msg != null) {
             Log.e(getTag(), msg);
         }
-        mService.stopService(new Intent(mService, UdpVpnService.class));
+        ((UdpVpnService)mService).disconnect();
     }
     private FileInputStream in;
     private FileOutputStream out;
@@ -137,6 +137,7 @@ class UdpVpnConnection implements Runnable {
                                     builder.addDnsServer(mDNS);
                                 }
                                 builder.addRoute("0.0.0.0", 0);
+                                builder.setMtu(1440);
                                 synchronized (mService) {
                                     iface = builder
                                             .setSession(mServer)

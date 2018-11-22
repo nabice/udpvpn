@@ -55,7 +55,7 @@ public class UdpVpnService extends VpnService {
         startConnection(new UdpVpnConnection(this, server, client, dns));
     }
 
-    private void disconnect() {
+    void disconnect() {
         setConnectingThread(null);
         setConnection(null);
         stopForeground(true);
