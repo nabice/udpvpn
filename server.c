@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     struct itimerspec new_value;
 
     unsigned char buffer[BUFLEN];
-    char setip_cmd[70], subnet_s[16], ip_str[40];
+    char setip_cmd[70], local_ip_s[16], ip_str[40];
     char command[10] = "NUDPN";
     int sockfd, tunfd, timerfd, i, j, nfds, epfd, nread, client_id;
     int super_client = -1;
@@ -74,11 +74,16 @@ int main(int argc, char *argv[])
     if((tunfd = tun_alloc("tun4", IFF_TUN | IFF_NO_PI)) < 0){
         panic("Open tun failed\n");
     }
-    sprintf(setip_cmd, "ip addr add %s1/24 dev tun4 && ip link set tun4 up", client_ip_prefix);
-    sprintf(subnet_s, "%s0", client_ip_prefix);
-    in_addr_t subnet = inet_addr(subnet_s);
+    sprintf(local_ip_s, "%s1", client_ip_prefix);
+    sprintf(setip_cmd, "ip addr add %s/24 dev tun4 && ip link set tun4 up", local_ip_s);
     if(system(setip_cmd)){
         panic("Set ip failed\n");
+    }
+    in_addr_t local_ip = inet_addr(local_ip_s);
+    in_addr_t subnet = local_ip & 0xffffff;
+    sprintf(setip_cmd, "ip -6 addr add fc00::%02x%02x:%02x%02x/120 dev tun4", local_ip & 0xff, (local_ip & 0xff00)>>8, (local_ip & 0xff0000)>>16, local_ip>>24);
+    if(system(setip_cmd)){
+        nopanic("Set ipv6 failed\n");
     }
     if(argc > 3){
         if(system(argv[3])){

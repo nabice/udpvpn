@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     struct itimerspec new_value;
 
     unsigned char buffer[BUFLEN];
-    char setip_cmd[70];
+    char setip_cmd[70], local_ip_s[16];
     char command[10] = "NUDPN";
     const char *srv_ip;
     int sockfd, tunfd, timerfd, i, nfds, epfd, nread;
@@ -109,9 +109,15 @@ int main(int argc, char *argv[]) {
                     idle = 1;
                     if(nread == 10 && buffer[0] == 'N' && buffer[1] == 'U' && buffer[2] == 'D' && buffer[3] == 'P' && buffer[4] == 'N'){
                         if(buffer[5] == 'S'){
-                            sprintf(setip_cmd, "ip addr add %s%d/24 dev %s && ip link set %s up", client_ip_prefix, buffer[6] + 2, tun_name, tun_name);
+                            sprintf(local_ip_s, "%s%d", client_ip_prefix, buffer[6] + 2);
+                            sprintf(setip_cmd, "ip addr add %s/24 dev %s && ip link set %s up", local_ip_s, tun_name, tun_name);
                             if(system(setip_cmd)){
                                 panic("Set ip failed\n");
+                            }
+                            in_addr_t local_ip = inet_network(local_ip_s);
+                            sprintf(setip_cmd, "ip -6 addr add fc00::%x:%x/120 dev %s", local_ip >> 16, local_ip & 0xffff, tun_name);
+                            if(system(setip_cmd)){
+                                nopanic("Set ipv6 failed\n");
                             }
                             if(argc > 3){
                                 if(system(argv[3])){
